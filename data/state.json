@@ -1,0 +1,13 @@
+{
+  "indexes": {
+    "hymn": 0,
+    "bread_bro": 0,
+    "bread_sis": 0,
+    "baking": 0,
+    "sharing": 0,
+    "pianist": 0,
+    "topic": 0,
+    "url": 0
+  },
+  "override": null
+}
