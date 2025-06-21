@@ -196,7 +196,6 @@ def weekly_job():
     else:
         print("[INFO] Weekly message sent.")
 
-
 def start_scheduler():
     schedule.every().monday.at("09:00").do(weekly_job)
     while True:
@@ -222,27 +221,43 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
+    user_id = event.source.user_id
+    print(f"[DEBUG] 來自 ID：{user_id}")
+
     text = event.message.text.strip()
     reply_token = event.reply_token
 
     def reply(msg):
         with ApiClient(configuration) as api_client:
-            MessagingApi(api_client).reply_message(ReplyMessageRequest(reply_token=reply_token, messages=[TextMessage(text=msg)]))
+            MessagingApi(api_client).reply_message(
+                ReplyMessageRequest(reply_token=reply_token,
+                                    messages=[TextMessage(text=msg)])
+            )
 
     def push(msg):
         with ApiClient(configuration) as api_client:
-            MessagingApi(api_client).push_message(PushMessageRequest(to=TARGET_ID, messages=[TextMessage(text=msg)]))
+            MessagingApi(api_client).push_message(
+                PushMessageRequest(to=TARGET_ID,
+                                   messages=[TextMessage(text=msg)])
+            )
 
     if text.startswith("!status"):
         mode = "Special" if is_special_week(load_state()) else "Normal"
-        reply(f"Current mode: {mode}")
+        reply(f"📌 當前模式：{mode}")
+
     elif text.startswith("!resend"):
         week = load_this_week()
-        msg = week.get("text", "No schedule")
+        msg = week.get("text", "❗ 尚未產生本週排班")
         push(msg)
-        reply("Resent.")
+        reply("📤 本週排班已重新推送")
+
+    elif text.startswith("!id"):
+        reply(f"🆔 你的 LINE ID 是：\n\n`{user_id}`\n\n請將此值貼進 `.env` 裡的 `TARGET_ID=` 後重新部署。")
+        print(f"[INFO] 請將此 ID 加入 .env 中作為 TARGET_ID：{user_id}")
+
     else:
-        reply("未來支援更多指令")
+        reply("⚠️ 指令未支援，目前支援指令有：\n\n`!status` – 查看當週模式\n`!resend` – 重送排班\n`!id` – 查詢你的使用者 ID")
+
 
 if __name__ == "__main__":
     if not THIS_WEEK_FILE.exists():
